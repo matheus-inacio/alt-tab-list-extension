@@ -26,6 +26,7 @@ import Pango from 'gi://Pango';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as AltTab from 'resource:///org/gnome/shell/ui/altTab.js';
 import * as SwitcherPopup from 'resource:///org/gnome/shell/ui/switcherPopup.js';
+import * as AnimationUtils from 'resource:///org/gnome/shell/misc/animationUtils.js';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -160,6 +161,17 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
 
         const themeNode = this.get_theme_node();
         return themeNode.adjust_preferred_width(newMin, newNat);
+    }
+
+    highlight(index, justOutline) {
+        super.highlight(index, justOutline);
+
+        if (index === -1 || !this._scrollView) {
+            return;
+        }
+
+        const item = this._items[index];
+        AnimationUtils.ensureActorVisibleInScrollView(this._scrollView, item);
     }
 
     _onDestroy() {
