@@ -1,0 +1,65 @@
+name: Build GNOME extension zip and attach to release
+
+on:
+  push:
+    tags: ['*']
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    name: Build and attach GNOME extension zip
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Release with generated notes
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --generate-notes \
+            --title "${{ github.ref_name }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build extension zip
+        id: build_zip
+        run: |
+          set -euo pipefail
+
+          UUID=$(python - <<'PY'
+          import json
+          with open('metadata.json') as f:
+              data = json.load(f)
+          print(data['uuid'])
+          PY
+          )
+
+          ZIP_NAME="${UUID}.zip"
+
+          mkdir -p dist
+          rm -rf "dist/$UUID"
+
+          rsync -av \
+            --exclude 'dist' \
+            --exclude 'README*' --exclude 'readme*' \
+            --exclude 'LICENSE*' --exclude 'license*' \
+            --exclude '*preview*' \
+            ./ "dist/$UUID/"
+
+          cd dist
+          zip -r "../${ZIP_NAME}" "${UUID}"
+          cd ..
+
+          echo "zip_name=${ZIP_NAME}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: ${{ steps.build_zip.outputs.zip_name }}
+
