@@ -2,7 +2,7 @@
   "name": "Alt+Tab List",
   "description": "Turn the alt+tab into a vertical list",
   "uuid": "alttab-list@matheus-inacio.com",
-  "shell-version": [
-    "49"
-  ]
+  "shell-version": ["49"],
+  "url": "https://github.com/matheus-inacio/alt-tab-list-extension",
+  "version": 1
 }
