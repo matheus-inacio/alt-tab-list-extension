@@ -29,17 +29,12 @@ import * as SwitcherPopup from 'resource:///org/gnome/shell/ui/switcherPopup.js'
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+// Helper function to retrieve windows,
+// adapted from gnome-shell context
 function getWindows(workspace) {
     const windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
-
     return windows
-        .map(w => {
-            if (w.is_attached_dialog()) {
-                return w.get_transient_for();
-            }
-
-            return w;
-        })
+        .map(w => w.is_attached_dialog() ? w.get_transient_for() : w)
         .filter((w, i, a) => !w.skip_taskbar && a.indexOf(w) === i);
 }
 
@@ -53,7 +48,6 @@ class SimpleWindowItem extends St.BoxLayout {
         });
 
         this.window = window;
-
         const tracker = Shell.WindowTracker.get_default();
         this.app = tracker.get_window_app(window);
 
@@ -83,13 +77,9 @@ class SimpleWindowItem extends St.BoxLayout {
         });
 
         // Show ellipsis when the title is too long
-        try {
-            const text = this.label.clutter_text;
-            text.ellipsize = Pango.EllipsizeMode.END;
-            text.line_wrap = false;
-        } catch (e) {
-            log(`alttab-list: failed to set ellipsize on label: ${e}`);
-        }
+        const text = this.label.clutter_text;
+        text.ellipsize = Pango.EllipsizeMode.END;
+        text.line_wrap = false;
 
         this.add_child(this.label);
     }
@@ -110,7 +100,7 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
         }
 
         // Allow vertical scrolling when there are many windows
-        if (this._scrollView !== null && this._scrollView !== undefined) {
+        if (this._scrollView) {
             this._scrollView.enable_mouse_scrolling = true;
             this._scrollView.hscrollbar_policy = St.PolicyType.NEVER;
             this._scrollView.vscrollbar_policy = St.PolicyType.AUTOMATIC;
@@ -119,8 +109,7 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
         this.windows = windows;
         this.icons = [];
 
-        for (let i = 0; i < windows.length; i += 1) {
-            const win = windows[i];
+        for (const win of windows) {
             const item = new SimpleWindowItem(win);
 
             this.addItem(item, item.label);
@@ -141,8 +130,8 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
         let minHeight = 0;
         let natHeight = 0;
 
-        for (let i = 0; i < this._items.length; i += 1) {
-            const [childMin, childNat] = this._items[i].get_preferred_height(-1);
+        for (const item of this._items) {
+            const [childMin, childNat] = item.get_preferred_height(-1);
             minHeight += childMin;
             natHeight += childNat;
         }
@@ -152,13 +141,8 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
 
         // Natural height is whatever our children need, but never more
         // than 80% of the monitor height.
-        if (natHeight > maxNat) {
-            natHeight = maxNat;
-        }
-
-        if (minHeight > natHeight) {
-            minHeight = natHeight;
-        }
+        natHeight = Math.min(natHeight, maxNat);
+        minHeight = Math.min(minHeight, natHeight);
 
         const themeNode = this.get_theme_node();
         return themeNode.adjust_preferred_height(minHeight, natHeight);
@@ -171,32 +155,19 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
         const minDesired = 480;
         const maxDesired = 680;
 
-        let newNat = natWidth;
-
-        if (newNat < minDesired) {
-            newNat = minDesired;
-        } else if (newNat > maxDesired) {
-            newNat = maxDesired;
-        }
-
-        let newMin = minWidth;
-        if (newMin < minDesired) {
-            newMin = minDesired;
-        }
-        if (newMin > newNat) {
-            newMin = newNat;
-        }
+        const newNat = Math.max(minDesired, Math.min(natWidth, maxDesired));
+        const newMin = Math.min(Math.max(minWidth, minDesired), newNat);
 
         const themeNode = this.get_theme_node();
         return themeNode.adjust_preferred_width(newMin, newNat);
     }
 
     _onDestroy() {
-        this.icons.forEach(icon => {
-            if (icon.window !== null) {
+        for (const icon of this.icons) {
+            if (icon.window) {
                 icon.window.disconnectObject(this);
             }
-        });
+        }
     }
 
     _removeWindow(window) {
@@ -204,6 +175,8 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
         if (index === -1) {
             return;
         }
+
+        window.disconnectObject(this);
 
         this.icons.splice(index, 1);
         this.removeItem(index);
