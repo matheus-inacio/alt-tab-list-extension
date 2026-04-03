@@ -179,7 +179,9 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
             if (icon.window) {
                 icon.window.disconnectObject(this);
             }
+            icon.destroy();
         }
+        this.icons = [];
     }
 
     _removeWindow(window) {
@@ -206,20 +208,21 @@ export default class AltTabListExtension extends Extension {
         proto._init = function () {
             SwitcherPopup.SwitcherPopup.prototype._init.call(this);
 
-            this._settings = new Gio.Settings({
+            const settings = new Gio.Settings({
                 schema_id: 'org.gnome.shell.window-switcher',
             });
 
             let workspace = null;
-            if (this._settings.get_boolean('current-workspace-only')) {
+            if (settings.get_boolean('current-workspace-only')) {
                 const workspaceManager = global.workspace_manager;
                 workspace = workspaceManager.get_active_workspace();
             }
 
             const windows = getWindows(workspace);
 
-            this._switcherList = new VerticalWindowSwitcher(windows);
-            this._items = this._switcherList.icons;
+            const switcherList = new VerticalWindowSwitcher(windows);
+            this._switcherList = switcherList;
+            this._items = switcherList.icons;
         };
     }
 
