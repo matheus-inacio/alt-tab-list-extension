@@ -221,8 +221,6 @@ export default class AltTabListExtension extends Extension {
                 workspace = global.workspace_manager.get_active_workspace();
             }
 
-            settings.run_dispose();
-
             const windows = getWindows(workspace);
 
             const switcherList = new VerticalWindowSwitcher(windows);
