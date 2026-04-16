@@ -30,8 +30,10 @@ import * as AnimationUtils from 'resource:///org/gnome/shell/misc/animationUtils
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
-// Helper function to retrieve windows,
-// adapted from gnome-shell context
+// Returns windows in pure MRU (most-recently-used) order across all
+// monitors and workspaces, including minimized windows.
+// get_tab_list(NORMAL_ALL, null) is exactly that — the global focus
+// history maintained by Mutter, most-recently-focused window first.
 function getWindows(workspace) {
     const windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
     return windows
@@ -88,6 +90,14 @@ const SimpleWindowItem = GObject.registerClass(
 
 const VerticalWindowSwitcher = GObject.registerClass(
     class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
+        // Override to prevent mouse hover from changing the selected item.
+        // The base class calls _itemEntered() here which eventually triggers
+        // _select(), causing the highlight to follow the pointer while the
+        // user is holding Alt.  We suppress that and only honour real clicks.
+        _onItemMotion(_item) {
+            return Clutter.EVENT_PROPAGATE;
+        }
+
         _init(windows) {
             super._init(false);
 
