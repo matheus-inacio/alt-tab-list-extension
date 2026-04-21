@@ -296,6 +296,19 @@ export default class AltTabListExtension extends Extension {
             const switcherList = new VerticalWindowSwitcher(windows);
             this._switcherList = switcherList;
             this._items = switcherList.icons;
+
+            const origKeyPress = this.__proto__._keyPressHandler;
+            this._keyPressHandler = function(keysym, action) {
+                if (keysym === Clutter.KEY_Shift_L || keysym === Clutter.KEY_Shift_R) {
+                    this._select(this._previous());
+                    return Clutter.EVENT_STOP;
+                }
+                if (keysym === Clutter.KEY_Tab || keysym === Clutter.KEY_ISO_Left_Tab) {
+                    this._select(this._next());
+                    return Clutter.EVENT_STOP;
+                }
+                return origKeyPress.call(this, keysym, action);
+            };
         };
     }
 
