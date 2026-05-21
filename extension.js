@@ -31,7 +31,7 @@ import * as AnimationUtils from 'resource:///org/gnome/shell/misc/animationUtils
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 let _mruSerial = 0;
-let _windowMru = new WeakMap();
+let _windowMru = null;
 
 function _isUsableWindow(window) {
     return window && !window.skip_taskbar;
@@ -321,7 +321,7 @@ export default class AltTabListExtension extends Extension {
 
         global.display.disconnectObject(this);
 
-        _windowMru = new WeakMap();
+        _windowMru = null;
         _mruSerial = 0;
         _originalInit = null;
     }
