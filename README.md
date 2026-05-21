@@ -16,4 +16,4 @@ By replacing the native grid-style switcher, this extension ensures that your wi
 
 ## Requirements
 
-* GNOME Shell 49, 50
+* GNOME Shell 50
