@@ -161,8 +161,6 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
                 this._removeWindow(window);
             }, this);
         }
-
-        this.connect('destroy', this._onDestroy.bind(this));
     }
 
     vfunc_get_preferred_height(_forWidth) {
@@ -215,7 +213,7 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
         AnimationUtils.ensureActorVisibleInScrollView(this._scrollView, item);
     }
 
-    _onDestroy() {
+    destroy() {
         for (const icon of this.icons) {
             if (icon.window) {
                 icon.window.disconnectObject(this);
@@ -223,6 +221,7 @@ class VerticalWindowSwitcher extends SwitcherPopup.SwitcherList {
             icon.destroy();
         }
         this.icons = [];
+        super.destroy();
     }
 
     _removeWindow(window) {
@@ -297,7 +296,7 @@ export default class AltTabListExtension extends Extension {
             this._switcherList = switcherList;
             this._items = switcherList.icons;
 
-            const origKeyPress = this.__proto__._keyPressHandler;
+            const origKeyPress = SwitcherPopup.SwitcherPopup.prototype._keyPressHandler;
             this._keyPressHandler = function(keysym, action) {
                 if (keysym === Clutter.KEY_Shift_L || keysym === Clutter.KEY_Shift_R) {
                     this._select(this._previous());
