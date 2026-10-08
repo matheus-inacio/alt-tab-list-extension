@@ -19,7 +19,7 @@ jobs:
 
       - name: Package Extension
         run: |
-          zip -r alttab-list@matheus-inacio.com.zip . -x "preview.jpeg" "README.md" "LICENSE" ".git/*" ".github/*"
+          zip -r alttab-list@matheus-inacio.com.zip . -x "preview.jpeg" "README.md" "LICENSE" ".git/*" ".github/*" ".gitignore" "schemas/gschemas.compiled"
 
       - name: Create Release and Upload Zip
         uses: softprops/action-gh-release@v2
